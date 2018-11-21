@@ -7,7 +7,7 @@ var sceneData = {
   myMesh: null,
   stats: null,
   step: 0,
-  clock: null,
+  clock: null
 };
 
 var sceneObjects = { // sceneObjects.commonBoxData.
@@ -69,31 +69,63 @@ var sceneObjects = { // sceneObjects.commonBoxData.
 };
 
 var gltfMeshData = {
+  template: { // copied to rotationData per mesh
+    rotAngle: 0, // angle that is used to orient the object    
+    rotIncrement: 0, // amount added/subtracted to/from rotAngle
+    rotDirection: 0, // -1, 0, 1
+    applyDamping: false,
+  },
+  
+  keyEventLookup: {
+    // "letter": { objectName: "", direction: "", index: "" },
+  },
+
   meshes: [
     {
       name: "CubeQ_exp",
       position: { x: 2, y: 0, z: 0 },
-      color:  0xffffff
+      color:  0xffffff,
+      rotationData: {}, // add to each
+      keyboardKeys: [
+        { key: 'Q', direction: 1 },
+        { key: 'A', direction: -1 },
+      ]
     },
     {
       name: "CubeW_exp",
       position: { x: 5, y: 0, z: 0 },
-      color:  0xffffff
+      color:  0xffffff,
+      keyboardKeys: [
+        { key: 'W', direction: 1 },
+        { key: 'S', direction: -1 },
+      ]
     },
     {
       name: "CubeE_exp",
       position: { x: 8, y: 0, z: 0 },
-      color:  0xffffff
+      color:  0xffffff,
+      keyboardKeys: [
+        { key: 'E', direction: 1 },
+        { key: 'D', direction: -1 },
+      ]
     },
     {
       name: "CubeR_exp",
       position: { x: 11, y: 0, z: 0 },
-      color:  0xffffff
+      color:  0xffffff,
+      keyboardKeys: [
+        { key: 'R', direction: 1 },
+        { key: 'F', direction: -1 },
+      ]
     },
     {
       name: "CubeT_exp",
       position: { x: 14, y: 0, z: 0 },
-      color:  0xffffff
+      color:  0xffffff,
+      keyboardKeys: [
+        { key: 'T', direction: 1 },
+        { key: 'G', direction: -1 },
+      ]
     }
   ]
 };

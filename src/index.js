@@ -9,10 +9,10 @@ function init() {
 
   sceneData.myMesh = createMesh();
   sceneData.scene.add( sceneData.myMesh );
-  loadFile();
-
+  
   sceneData.clock = new THREE.Clock();
   
+  loadFile();
   // sceneData.scene.add( createBoxes() );
 
   // add the output of the renderer to the html page
@@ -20,7 +20,7 @@ function init() {
 
   keyBoardEvents();
 
-  animate();
+  animate(); // if run before loadFile has finished an error shows
 }
 
 function keyBoardEvents() {
@@ -53,6 +53,34 @@ function keyBoardEvents() {
     }
   }
 
+  function evalRot(shape, sign) { // sign = 1 or -1
+    shape.applyDamping = false;
+
+    var commonData = sceneObjects.commonBoxData;
+    var rotIncrement = shape.rotIncrement;
+    rotIncrement += commonData.rotAcceleration * sign;
+
+    if (Math.abs(rotIncrement) > commonData.rotMax) {
+      // limit the rotation speed to rotMax
+      rotIncrement = commonData.rotMax * sign;
+      console.log('Max rotation ' + sign);
+
+    } else if (Math.abs(rotIncrement) < commonData.rotMin) { 
+      // add a minimum rotation speed
+      rotIncrement += commonData.rotMin * sign;
+    }
+
+    shape.rotIncrement = rotIncrement;
+  }
+
+  function updateSpinNEW(event) { // move this outside of keyBoardEvents 
+    // console.log('Key pressed ' + event.key)
+    var name = gltfMeshData.keyEventLookup[event.key.toUpperCase()];
+    if (name) {
+      evalRot(gltfMeshData.meshes[name.index].rotationData, name.direction);
+    }
+  }
+
   function enableDamping(event) {    
     var name = sceneObjects.keyEventLookup[event.key.toUpperCase()];
     if (name) {
@@ -63,8 +91,24 @@ function keyBoardEvents() {
     return;
   }
 
-  window.addEventListener("keydown", updateSpin);
-  window.addEventListener("keyup", enableDamping);
+  function enableDampingNEW(event) {    
+    var name = gltfMeshData.keyEventLookup[event.key.toUpperCase()];
+    if (name) {
+      gltfMeshData.meshes[name.index].rotationData.applyDamping = true;
+      // console.log('? ' + name.index);
+    } else {
+      console.log('FIX');
+    }
+
+    sceneData.clock.getDelta();
+
+    return;
+  }
+
+  // window.addEventListener("keydown", updateSpin);
+  window.addEventListener("keydown", updateSpinNEW);
+  // window.addEventListener("keyup", enableDamping);
+  window.addEventListener("keyup", enableDampingNEW);
 }
 
 function setupScene() {
@@ -106,16 +150,30 @@ var animate = function () {
   sceneData.step += 0.04;
   object.position.x = 0 + ( 1 * ( Math.cos(sceneData.step) ) );  
 
-  applyRotationToList(sceneObjects.boxList);
+  // applyRotationToList(sceneObjects.boxList);
+
+  applyRotationToListNEW(gltfMeshData.meshes);
   
   sceneData.renderer.render(sceneData.scene, sceneData.camera);
+}
+
+function applyRotationToListNEW(objectList) {
+  var time = sceneData.clock.getDelta();
+
+  objectList.forEach(function(item){
+    applyRotation( item.rotationData, item.name );
+
+    if (item.rotationData.applyDamping) {
+      applyDamping(item.rotationData, time);
+    }
+  });
 }
 
 function applyRotationToList(objectList) {
   var time = sceneData.clock.getDelta();
   for (var item in objectList) {
     // console.log(objectList[item]);
-    applyRotation( objectList[item] );
+    applyRotation( objectList[item], objectList[item].name );
 
     if (objectList[item].applyDamping) {
       applyDamping(objectList[item], time);
@@ -123,10 +181,10 @@ function applyRotationToList(objectList) {
   }
 }
 
-function applyRotation(object) {
+function applyRotation(object, name) {
   // Should a reference to the scene object be stored in the sceneData list of objects?
 
-  var sceneObj = sceneData.scene.getObjectByName(object.name);  
+  var sceneObj = sceneData.scene.getObjectByName(name);  
   object.rotAngle += object.rotIncrement;
   object.rotDirection = Math.sign(object.rotIncrement); // fix/check !
   sceneObj.rotation.x = object.rotAngle;
@@ -228,6 +286,7 @@ function loadFile() {
        
     var meshes = buildMeshes(sceneData.scene, gltfData.scene);
     sceneData.scene.add(meshes);
+    // animate();
   
   }, undefined, function ( error ) {  
     console.error( error );  
@@ -239,14 +298,31 @@ function buildMeshes(existingScene, importedScene) {
   var phongMaterial = new THREE.MeshPhongMaterial( { color: 0x550000, emissive: 0x000055 } );
   //, specular: 0xffffff, shininess: 50
 
-  gltfMeshData.meshes.forEach(function (item) {
+  gltfMeshData.meshes.forEach(function (item, index) {
     // console.log(item.name);
     var mesh = importedScene.getObjectByName(item.name);
+    if (!mesh) {
+      return;
+    }
+
     mesh.position.x = item.position.x;
     mesh.position.y = item.position.y;
     mesh.position.z = item.position.z;
     mesh.material = phongMaterial;
     // console.log(mesh);
+    // sceneData.boxes[item.name] = {};
+
+    // register keys to be looked up when keys are pressed
+    if (item.keyboardKeys) {
+      item.keyboardKeys.forEach(function (keyData){
+        gltfMeshData.keyEventLookup[keyData.key] = { objectName: item.name, direction: keyData.direction, index: index };
+      });
+      // console.log(sceneObjects.keyEventLookup);
+    }
+
+    // data to be updated to spin the shapes
+    item.rotationData = JSON.parse(JSON.stringify(gltfMeshData.template));
+
     meshGroup.add(mesh);
   });
 
