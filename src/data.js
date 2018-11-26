@@ -127,6 +127,49 @@ var gltfMeshData = {
         { key: 'G', direction: -1 },
       ]
     }
+  ],
+  meshes2: [
+    {
+      name: "CubeQ",
+      color:  0x2194ce,
+      rotationData: {}, // add to each
+      keyboardKeys: [
+        { key: 'Q', direction: 1 },
+        { key: 'A', direction: -1 },
+      ]
+    },
+    {
+      name: "CubeW",
+      color:  0x94ce21,
+      keyboardKeys: [
+        { key: 'W', direction: 1 },
+        { key: 'S', direction: -1 },
+      ]
+    },
+    {
+      name: "CubeE",
+      color:  0xce2194,
+      keyboardKeys: [
+        { key: 'E', direction: 1 },
+        { key: 'D', direction: -1 },
+      ]
+    },
+    {
+      name: "CubeR",
+      color:  0x21ce94,
+      keyboardKeys: [
+        { key: 'R', direction: 1 },
+        { key: 'F', direction: -1 },
+      ]
+    },
+    {
+      name: "CubeT",
+      color:  0x9421ce,
+      keyboardKeys: [
+        { key: 'T', direction: 1 },
+        { key: 'G', direction: -1 },
+      ]
+    }
   ]
 };
 
