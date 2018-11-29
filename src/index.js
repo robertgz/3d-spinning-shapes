@@ -6,22 +6,16 @@ function init() {
 
   let datGUI = createDAT();
   setupScene();
-
-  sceneData.myMesh = createMesh();
-  sceneData.scene.add( sceneData.myMesh );
   
   sceneData.clock = new THREE.Clock();
 
-  document.body.appendChild(sceneData.renderer.domElement);
-  
-  // loadFile();
   loadFile2();
-  // sceneData.scene.add( createBoxes() );
-
-  // add the output of the renderer to the html page
 
   keyBoardEvents();
 
+  // add the output of the renderer to the html page
+  document.body.appendChild(sceneData.renderer.domElement);
+  
   // animate(); // if run before loadFile has finished an error shows
 }
 
@@ -75,7 +69,7 @@ function keyBoardEvents() {
     shape.rotIncrement = rotIncrement;
   }
 
-  function updateSpinNEW(event) { // move this outside of keyBoardEvents 
+  function updateSpin(event) { // move this outside of keyBoardEvents 
     // console.log('Key pressed ' + event.key)
     var name = gltfMeshData.keyEventLookup[event.key.toUpperCase()];
     if (name) {
@@ -93,11 +87,10 @@ function keyBoardEvents() {
     return;
   }
 
-  function enableDampingNEW(event) {    
+  function enableDamping(event) {    
     var name = gltfMeshData.keyEventLookup[event.key.toUpperCase()];
     if (name) {
       gltfMeshData.meshes2[name.index].rotationData.applyDamping = true;
-      // console.log('? ' + name.index);
     } else {
       console.log('FIX');
     }
@@ -107,10 +100,8 @@ function keyBoardEvents() {
     return;
   }
 
-  // window.addEventListener("keydown", updateSpin);
-  window.addEventListener("keydown", updateSpinNEW);
-  // window.addEventListener("keyup", enableDamping);
-  window.addEventListener("keyup", enableDampingNEW);
+  window.addEventListener("keydown", updateSpin);
+  window.addEventListener("keyup", enableDamping);
 }
 
 function setupScene() {
@@ -121,26 +112,22 @@ function setupScene() {
   sceneData.camera.position.y = 0;
   sceneData.camera.position.z = 15;
 
-  sceneData.renderer = new THREE.WebGLRenderer();
+  sceneData.renderer = new THREE.WebGLRenderer( { antialias: true } ); //
   sceneData.renderer.setClearColor( StoreData.background );
   // renderer.setSize(window.innerWidth, window.innerHeight);
   sceneData.renderer.setSize(500, 400);
 
   // add lights
-  // sceneData.spotLight = new THREE.SpotLight( 0xffffff );
-  // sceneData.spotLight.position.set( -40, 60, -10 );
-  // sceneData.scene.add( sceneData.spotLight );
-  
   // sceneData.ambientLight = new THREE.AmbientLight( 0x0c0c0c, sceneData.ambientIntensity );
   // sceneData.scene.add( sceneData.ambientLight ); 
 
-  var light1 = new THREE.PointLight( 0xffffff, .25, 100 );
-  light1.position.set( -8, 3.6, 6 );
-  sceneData.scene.add( light1 );
+  sceneData.pointLight1 = new THREE.PointLight( 0xffffff, .25, 100 );
+  sceneData.pointLight1.position.set( -8, 3.6, 6 );
+  sceneData.scene.add( sceneData.pointLight1 );
 
-  var light2 = new THREE.PointLight( 0xffffff, .15, 100 );
-  light2.position.set( 11, -3, 6 );
-  sceneData.scene.add( light2 );
+  sceneData.pointLight2 = new THREE.PointLight( 0xffffff, .15, 100 );
+  sceneData.pointLight2.position.set( 11, -3, 6 );
+  sceneData.scene.add( sceneData.pointLight2 );
 
   // show axes in the screen
   sceneData.scene.add(new THREE.AxesHelper(5));
@@ -148,27 +135,18 @@ function setupScene() {
   return sceneData.scene;
 }
 
-// function animate() {
 var animate = function () {
   sceneData.stats.update();
   requestAnimationFrame( animate );
-  var datData = StoreData;
-  var object = sceneData.myMesh;
-  object.rotation.z += 0.01 * datData.rotationZmultiplier;
-  object.rotation.y += 0.01 * datData.rotationYmultiplier;
   
   sceneData.step += 0.04;
-  object.position.x = 0 + ( 1 * ( Math.cos(sceneData.step) ) );  
   
-  // applyRotationToList(sceneObjects.boxList);
-  
-  
-  applyRotationToListNEW(gltfMeshData.meshes2);
+  applyRotationToList(gltfMeshData.meshes2);
   
   sceneData.renderer.render(sceneData.scene, sceneData.camera);
 }
 
-function applyRotationToListNEW(objectList) {
+function applyRotationToList(objectList) {
   var time = sceneData.clock.getDelta();
 
   objectList.forEach(function(item){
@@ -180,17 +158,6 @@ function applyRotationToListNEW(objectList) {
   });
 }
 
-function applyRotationToList(objectList) {
-  var time = sceneData.clock.getDelta();
-  for (var item in objectList) {
-    // console.log(objectList[item]);
-    applyRotation( objectList[item], objectList[item].name );
-
-    if (objectList[item].applyDamping) {
-      applyDamping(objectList[item], time);
-    }    
-  }
-}
 
 function applyRotation(object, name) {
   // Should a reference to the scene object be stored in the sceneData list of objects?
@@ -220,113 +187,22 @@ function applyDamping(object, time) {
   object.rotDirection = Math.sign(object.rotIncrement);
 }
 
-function createMesh() {
-  var sideLength = 1;
-  var datData = StoreData;
-  var geometry = new THREE.BoxGeometry( sideLength, sideLength, sideLength);
-  // var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-  // var material = new THREE.MeshLambertMaterial( { color: datData.cubeColor } );
-  var material = new THREE.MeshPhongMaterial( { color: datData.cubeColor } );
-  var cube = new THREE.Mesh( geometry, material);
-  cube.name = "moving cube";
-  
-  return cube;
-}
-
-function createBoxes() {
-  var group = new THREE.Group();
-
-  console.log('Box names');
-  var boxTemplateJSON = JSON.stringify(sceneObjects.templateBoxData);
-
-  sceneObjects.boxInits.forEach(function(item) {
-    sceneObjects.boxList[item.name] = JSON.parse(boxTemplateJSON);  
-    sceneObjects.boxList[item.name].name = item.name;
-    sceneObjects.boxList[item.name].color = 0xffffff * Math.random();
-    sceneObjects.boxList[item.name].position.x = item.positionX;
-
-    // register keys to be looked up when keys are pressed
-    if (item.keyboardKeys) {
-      item.keyboardKeys.forEach(function (keyData){
-        sceneObjects.keyEventLookup[keyData.key] = { objectName: item.name, direction: keyData.direction };
-      });
-      // console.log(sceneObjects.keyEventLookup);
-    }
-  });
-  
-  for (var item in sceneObjects.boxList) {
-    group.add( createBox( sceneObjects.boxList[item] ) );
-  }
-
-  return group;
-}
-
-function createBoxData() {
-
-}
-
-function createBox(boxData, positionX) { // creates THREEjs mesh
-  var sideLength = sceneObjects.commonBoxData.sideLength;
-  var geometry = new THREE.BoxGeometry( sideLength, sideLength, sideLength );
-  var material = new THREE.MeshPhongMaterial( { color: boxData.color } );
-  var box = new THREE.Mesh( geometry, material );
-  box.name = boxData.name;
-  box.position.x = boxData.position.x;
-
-  return box;
-}
-
-
 function loadFile2() {
   var loader = new THREE.GLTFLoader();
-
   loader.load( './assets/QWERT_Cubes1.gltf', function ( gltfData ) {
 
-  var letterCubes = gltfData.scene.getObjectByName("Original_Empty001");
-  var cam1 = gltfData.scene.getObjectByName("CameraRG");
-  // console.log(temp);
-  // sceneData.scene.add( cam1 );
-  
-  prepImportedScene(sceneData.scene, letterCubes);
-  console.log(sceneData.scene);
-  sceneData.scene.add( letterCubes );
-  animate();
-
-}, undefined, function ( error ) {  
-  console.error( error );  
-} );
-}
-
-function loadFile() {
-  var loader = new THREE.GLTFLoader();
-
-  // loader.load( './assets/Box.gltf', function ( gltfData ) {
-  loader.load( './assets/QWERT_Cubes.gltf', function ( gltfData ) {
-    // console.log('QWERT_Cubes.gltf loaded');
-    // // console.log(gltfData);
-    // console.log(gltfData.scene);
-
-    // let scale = 25.0;
-    // let scale = 1.0;
-    // gltfData.scene.scale.x = scale;
-    // gltfData.scene.scale.y = scale;
-    // gltfData.scene.scale.y = scale;
-    // sceneData.scene.add( gltfData.scene );
-
-    // console.log('sceneData.scene');
-    // console.log(sceneData.scene);
-       
-    var meshes = buildMeshes(sceneData.scene, gltfData.scene);
-    sceneData.scene.add(meshes);
+    var letterCubes = gltfData.scene.getObjectByName("Original_Empty001");
+    
+    prepImportedScene(sceneData.scene, letterCubes);
+    sceneData.scene.add( letterCubes );
     animate();
-  
+
   }, undefined, function ( error ) {  
     console.error( error );  
   } );
 }
 
 function prepImportedScene(existingScene, importedScene) {
-  //, specular: 0xffffff, shininess: 50
 
   gltfMeshData.meshes2.forEach(function (item, index) {
     var mesh = importedScene.getObjectByName(item.name);
@@ -334,15 +210,11 @@ function prepImportedScene(existingScene, importedScene) {
       return;
     }
 
-    var phongMaterial = new THREE.MeshPhongMaterial( 
-      { color: item.color} ); //, emissive: 0x330055
-      //, emissive: 0x333333 
+    var phongMaterial = new THREE.MeshPhongMaterial( { color: item.color} ); 
     mesh.material = phongMaterial;
 
     mesh.children[0].material = new THREE.MeshPhongMaterial( 
       { emissive: 0x777759 } );
-    // console.log("mesh.children");
-    // console.log(mesh.children.material);
 
     // register keys to be looked up when keys are pressed
     if (item.keyboardKeys) {
@@ -354,42 +226,6 @@ function prepImportedScene(existingScene, importedScene) {
     // data to be updated to spin the shapes
     item.rotationData = JSON.parse(JSON.stringify(gltfMeshData.template));
   });
-}
-
-function buildMeshes(existingScene, importedScene) {
-  var meshGroup = new THREE.Group();
-  var phongMaterial = new THREE.MeshPhongMaterial( { color: 0x550000, emissive: 0x000055 } );
-  //, specular: 0xffffff, shininess: 50
-
-  gltfMeshData.meshes.forEach(function (item, index) {
-    // console.log(item.name);
-    var mesh = importedScene.getObjectByName(item.name);
-    if (!mesh) {
-      return;
-    }
-
-    mesh.position.x = item.position.x;
-    mesh.position.y = item.position.y;
-    mesh.position.z = item.position.z;
-    mesh.material = phongMaterial;
-    // console.log(mesh);
-    // sceneData.boxes[item.name] = {};
-
-    // register keys to be looked up when keys are pressed
-    if (item.keyboardKeys) {
-      item.keyboardKeys.forEach(function (keyData){
-        gltfMeshData.keyEventLookup[keyData.key] = { objectName: item.name, direction: keyData.direction, index: index };
-      });
-      // console.log(sceneObjects.keyEventLookup);
-    }
-
-    // data to be updated to spin the shapes
-    item.rotationData = JSON.parse(JSON.stringify(gltfMeshData.template));
-
-    meshGroup.add(mesh);
-  });
-
-  return meshGroup;
 }
 
 function createDAT() {
@@ -400,11 +236,11 @@ function createDAT() {
   gui.add(datData, 'ambientIntensity', -1, 50, 1).onChange(function (e) {
       sceneData.ambientLight.intensity = e ;
   });
-  gui.addColor(datData, 'cubeColor').onChange(function (e) {
-    if (sceneData.myMesh !== null) {
-      sceneData.myMesh.material.color.setHex( e );
-    }    
-  });
+  // gui.addColor(datData, 'cubeColor').onChange(function (e) {
+  //   if (sceneData.myMesh !== null) {
+  //     sceneData.myMesh.material.color.setHex( e );
+  //   }    
+  // });
   gui.addColor(datData, 'background').onChange(function (e) {
       sceneData.renderer.setClearColor( e );
   });
