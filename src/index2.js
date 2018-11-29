@@ -30,14 +30,15 @@ cubeSpin = function() {
       background: configScene.backgroundColor 
     });
 
-    var camPos = configScene.cameraPosition;    
+    var camPos = configScene.cameraPosition;
+    var size = getWindowSize();
     data.camera = new THREE.PerspectiveCamera( 
-      45, configScene.renderSize.x / configScene.renderSize.y, 1, 1000
+      45, size.x / size.y, 1, 1000
     );
     data.camera.position.set( camPos.x, camPos.y, camPos.z );
 
     data.renderer = new THREE.WebGLRenderer( configScene.renderConfig );
-    data.renderer.setSize( configScene.renderSize.x, configScene.renderSize.y );
+    data.renderer.setSize( size.x, size.y );
 
     configScene.pointLights.forEach(function(lightData) {
       var light = new THREE.PointLight( 
@@ -47,7 +48,6 @@ cubeSpin = function() {
       light.position.set( pos.x, pos.y, pos.z );
       data.scene.add( light );
     });
-
     // data.scene.add(new THREE.AxesHelper(5));
 
     return data.scene;
@@ -77,41 +77,6 @@ cubeSpin = function() {
       }
 
     });
-  }
-
-  function importFile() {
-    var loader = new THREE.GLTFLoader();
-    loader.load( './assets/QWERT_Cubes1.gltf', function ( gltfData ) {
-
-      var names = Object.keys(data.objectList);
-      var importedScene = gltfData.scene;
-
-      names.forEach(function(item) {
-
-        var gltfCube = importedScene.getObjectByName(item);
-        var group = data.scene.getObjectByName(item);
-
-        if ( !gltfCube || !group ) {
-          return;
-        }
-        
-        var phongMaterial = new THREE.MeshPhongMaterial( { color: data.objectList[item].color} );
-        gltfCube.material = phongMaterial;
-        gltfCube.children[0].material = new THREE.MeshPhongMaterial( { emissive: 0x777759 } );
-                
-        group.position.copy(gltfCube.position);
-        gltfCube.position.copy( new THREE.Vector3( ) );
-        gltfCube.name = item + "_gltf";
-        group.add(gltfCube);
-      });
-      // console.log(data.scene);
-
-      data.fileImported = true;
-
-    }, undefined, function ( error ) {  
-      console.error( error );  
-      data.fileImported = false;
-    } );
   }
 
   function setupObjectData() {
@@ -159,9 +124,27 @@ cubeSpin = function() {
     data.clock.getDelta();
   }
 
-  function setupKeyboardEvents() {
-    window.addEventListener("keydown", updateSpinListener);
-    window.addEventListener("keyup", enableDampingListener);
+  function getWindowSize() {
+    if (configScene.fullScreen) {
+      return { x: window.innerWidth, y: window.innerHeight };
+    } else {
+      return configScene.renderSize;
+    }
+  }
+
+  function onWindowResize(){
+    var size = getWindowSize();
+    
+    data.camera.aspect = size.x / size.y;
+    data.camera.updateProjectionMatrix();
+
+    data.renderer.setSize( size.x, size.y );
+  }
+
+  function setupEvents() {
+    window.addEventListener( "keydown", updateSpinListener, false );
+    window.addEventListener( "keyup", enableDampingListener, false );
+    window.addEventListener( "resize", onWindowResize, false );
   }
  
   function applyRotation(object, name) {
@@ -182,7 +165,7 @@ cubeSpin = function() {
         object.applyDamping = false;
         object.rotIncrement = 0;
       }
-    } else { // if (rotSpeed > 0)
+    } else {
       rotSpeed -= time * configScene.rotationConstants.dampingFactor;
       object.rotIncrement = rotSpeed * object.rotDirection;
     }
@@ -211,6 +194,41 @@ cubeSpin = function() {
     
     data.renderer.render(data.scene, data.camera);
   }
+  
+  function importFile() {
+    var loader = new THREE.GLTFLoader();
+    loader.load( './assets/QWERT_Cubes1.gltf', function ( gltfData ) {
+
+      var names = Object.keys(data.objectList);
+      var importedScene = gltfData.scene;
+
+      names.forEach(function(item) {
+
+        var gltfCube = importedScene.getObjectByName(item);
+        var group = data.scene.getObjectByName(item);
+
+        if ( !gltfCube || !group ) {
+          return;
+        }
+        
+        var phongMaterial = new THREE.MeshPhongMaterial( { color: data.objectList[item].color} );
+        gltfCube.material = phongMaterial;
+        gltfCube.children[0].material = new THREE.MeshPhongMaterial( { emissive: 0x777759 } );
+                
+        group.position.copy(gltfCube.position);
+        gltfCube.position.copy( new THREE.Vector3( ) );
+        gltfCube.name = item + "_gltf";
+        group.add(gltfCube);
+      });
+      // console.log(data.scene);
+
+      data.fileImported = true;
+
+    }, undefined, function ( error ) {  
+      console.error( error );  
+      data.fileImported = false;
+    } );
+  }
 
   /* **************** */
   /* application data */
@@ -229,8 +247,7 @@ cubeSpin = function() {
     },
     sceneObjectsName: "letters",
 
-    objectList: {}, // { name: { rotationData }}
-      // a.k.a. sceneObjects.boxList
+    objectList: {}, // { name: { rotationData, color }}
     keyPressLookup: {},  // "letter": { objectName: "", direction: "" },
   }
 
@@ -238,7 +255,8 @@ cubeSpin = function() {
     backgroundColor: 0xeeeeee,
     cameraPosition: { x: 0, y: 0, z: 18 },
     renderSize: { x: 500, y: 400 },
-    // renderSize: { x: window.innerWidth, y: window.innerHeight },
+    // fullScreen: false,
+    fullScreen: true,
     renderConfig: { antialias: true },
     pointLights: [ {
         position: { x: -8, y: 3.6, z: 6 },
@@ -310,10 +328,6 @@ cubeSpin = function() {
     ]
   }
 
-  var configImportFile = {
-
-  }
-
   /* *********************** */
   /* application entry point */
   function init() {
@@ -332,8 +346,8 @@ cubeSpin = function() {
 
     animate();
     
+    setupEvents();
     importFile();
-    setupKeyboardEvents();
   }
 
   return {
