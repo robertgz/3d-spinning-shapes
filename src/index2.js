@@ -1,30 +1,4 @@
 cubeSpin = function() {
-  // setup stats.js 
-  function initStats() {
-    var stats = data.stats = new Stats();
-    stats.setMode(0);
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left = '0px';
-    stats.domElement.style.top = '0px';
-  
-    return stats.domElement;
-  }
-  // setup dat.gui
-  function createDAT() {
-    var datData = data.datGUIData;
-    var gui = new dat.GUI();
-    gui.add(datData, 'rotationZmultiplier', -25, 25).step(1);
-    gui.add(datData, 'rotationYmultiplier', -25, 25, 1);
-    gui.add(datData, 'ambientIntensity', -1, 50, 1).onChange(function (e) {
-        data.ambientLight.intensity = e ;
-    });
-    gui.addColor(datData, 'background').onChange(function (e) {
-        data.renderer.setClearColor( e );
-    });
-  
-    return gui;
-  }
-  
   function setupScene() {
     data.scene = new THREE.Scene( { 
       background: configScene.backgroundColor 
@@ -48,7 +22,6 @@ cubeSpin = function() {
       light.position.set( pos.x, pos.y, pos.z );
       data.scene.add( light );
     });
-    // data.scene.add(new THREE.AxesHelper(5));
 
     return data.scene;
   }
@@ -208,7 +181,6 @@ cubeSpin = function() {
   }
 
   function animate() {
-    data.stats.update();
     requestAnimationFrame( animate );
     
     applyRotationToList(data.objectList);
@@ -257,15 +229,8 @@ cubeSpin = function() {
     scene: null,
     renderer: null,
     camera: null,
-    stats: null,
     clock: null,
     fileImported: false,
-    datGUIData: {
-      rotationZmultiplier: 1,
-      rotationYmultiplier: 1,
-      ambientIntensity: 1.0,
-      background: 0xeeeeee,
-    },
     sceneObjectsName: "letters",
 
     objectList: {}, // { name: { rotationData, color }}
@@ -352,9 +317,6 @@ cubeSpin = function() {
   /* *********************** */
   /* application entry point */
   function init() {
-
-    document.body.appendChild(initStats());
-    createDAT();    
     setupScene();
     
     document.body.appendChild(data.renderer.domElement);
