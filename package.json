@@ -1,7 +1,7 @@
 {
-  "name": "three-practice",
+  "name": "3d_spinning_shapes",
   "version": "1.0.0",
-  "description": "Started on 11/11/2018 to practice Threejs using r98 and based on examples from the git source of Learn-Three.js-Third-Edition.",
+  "description": "Started on 11/11/2018 to practice Threejs using r98.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

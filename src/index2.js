@@ -98,7 +98,7 @@ cubeSpin = function() {
     if (Math.abs(rotIncrement) > rotMax) {
       // limit the rotation speed to rotMax
       rotIncrement = rotMax * sign;
-      console.log('Max rotation ' + sign);
+      // console.log('Max rotation ' + sign);
 
     } else if (Math.abs(rotIncrement) < rotMin) { 
       // add a minimum rotation speed
@@ -108,7 +108,7 @@ cubeSpin = function() {
     rotationData.rotIncrement = rotIncrement;
   }
   function updateSpinListener(event) { 
-    console.log('Key pressed ' + event.key)
+    // console.log('Key pressed ' + event.key)
     var name = data.keyPressLookup[event.key.toUpperCase()];
     if (!name) {
       return;
@@ -141,10 +141,31 @@ cubeSpin = function() {
     data.renderer.setSize( size.x, size.y );
   }
 
+  function getRandomRotation(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+  
+  function processKeypress(event) {
+    if (event.key === " ") {
+      // apply a random rotation to each object when the spacebar is pressed
+
+      var rotCon = configScene.rotationConstants;
+      var objectNames = Object.keys(data.objectList);
+
+      objectNames.forEach(function(object) {
+        var rotation = getRandomRotation( -rotCon.rotMax*2, rotCon.rotMax*2);
+        
+        data.objectList[object].rotationData.rotIncrement = rotation;
+        data.objectList[object].rotationData.applyDamping = true;
+      });
+    }
+  }
+
   function setupEvents() {
     window.addEventListener( "keydown", updateSpinListener, false );
     window.addEventListener( "keyup", enableDampingListener, false );
     window.addEventListener( "resize", onWindowResize, false );
+    window.addEventListener( "keyup", processKeypress, false );
   }
  
   function applyRotation(object, name) {
@@ -331,7 +352,7 @@ cubeSpin = function() {
   /* *********************** */
   /* application entry point */
   function init() {
-    console.log("New Init.");
+
     document.body.appendChild(initStats());
     createDAT();    
     setupScene();
